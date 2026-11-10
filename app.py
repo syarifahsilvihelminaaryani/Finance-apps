@@ -1,77 +1,110 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
 import os
-
-from google import genai
-from dotenv import load_dotenv
+import pandas as pd
+import streamlit as st
+from groq import Groq
 
 # ==========================================
-# 1. PAGE CONFIGURATION
+# 1. KONFIGURASI HALAMAN STREAMLIT
 # ==========================================
 st.set_page_config(
-    page_title="Budget vs Actuals AI",
+    page_title="Tech Audit - Budget vs Actuals & AI Analysis",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
 )
 
 st.title("📊 Budget vs Actuals & AI Variance Analysis")
 
 # ==========================================
-# 2. LOAD GEMINI API KEY
+# 2. MEMUAT GROQ API KEY
 # ==========================================
-load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
 try:
-    if "GEMINI_API_KEY" in st.secrets:
-        GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+  if "GROQ_API_KEY" in st.secrets:
+    groq_api_key = st.secrets["GROQ_API_KEY"]
+  else:
+    groq_api_key = os.getenv("GROQ_API_KEY")
 except Exception:
-    pass
+  groq_api_key = os.getenv("GROQ_API_KEY")
+
+# Inisialisasi client Groq
+client = Groq(api_key=groq_api_key)
+
 
 # ==========================================
-# 3. MEMBACA FILE EXCEL
+# 3. FUNGSI ANALISIS AI MENGGUNAKAN GROQ
 # ==========================================
-excel_file = "File BUDGET VS ACTUAL.xlsx"
+def run_ai_analysis(prompt_text):
+  try:
+    if not groq_api_key:
+      return (
+          "Kesalahan: GROQ_API_KEY belum dikonfigurasi di Streamlit Secrets."
+      )
+
+    completion = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Anda adalah seorang auditor keuangan publik yang ahli"
+                    " dalam analisis varians anggaran dan evaluasi kinerja"
+                    " keuangan."
+                ),
+            },
+            {"role": "user", "content": prompt_text},
+        ],
+        temperature=0.7,
+    )
+    return completion.choices[0].message.content
+  except Exception as e:
+    return f"Terjadi kesalahan saat menghubungkan ke Groq AI: {str(e)}"
+
+
+# ==========================================
+# 4. MEMUAT DATASET EXCEL
+# ==========================================
+file_path = "BUDGET VS ACTUAL.xlsx"
+
+st.subheader("📁 Data Keuangan (Budget vs Actual)")
 
 try:
-    df = pd.read_excel(excel_file)
-    st.success(f"Berhasil memuat data dari {excel_file}!")
-    
-    st.subheader("Preview Data Keuangan:")
-    st.dataframe(df)
-    
-    # ==========================================
-    # 4. FITUR AI GEMINI (VARIANCE COMMENTARY)
-    # ==========================================
-    st.divider()
-    st.subheader("🤖 Analisis Komentar AI (Gemini)")
-    
-    if not GEMINI_API_KEY:
-        st.warning("⚠️ GEMINI_API_KEY belum diatur! Masukkan API key di menu Secrets Streamlit.")
-    else:
-        if st.button("🚀 Jalankan Analisis AI"):
-            with st.spinner("Sedang Menganalisis Data Keuangan..."):
-                try:
-                    # Inisialisasi client Google GenAI
-                    client = genai.Client(api_key=GEMINI_API_KEY)
-                    
-                    # Mengubah data tabel ke string agar bisa dibaca AI
-                    data_summary = df.to_string()
-                    
-                    prompt = f"Bertindaklah sebagai Senior Financial Auditor. Analisis data Budget vs Actual berikut dan berikan komentar serta rekomendasi perbaikan secara profesional dalam Bahasa Indonesia:\n\n{data_summary}"
-                    
-                    # Memanggil model Gemini AI
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=prompt,
-                    )
-                    
-                    st.markdown("### Hasil Analisis AI:")
-                    st.write(response.text)
-                    
-                except Exception as e:
-                    st.error(f"Terjadi kesalahan saat menghubungi Gemini AI: {e}")
-
+  if os.path.exists(file_path):
+    df = pd.read_excel(file_path)
+    st.dataframe(df, use_container_width=True)
+  else:
+    st.warning(
+        f"File {file_path} tidak ditemukan di direktori repositori. Silkan"
+        " unggah file Excel tersebut ke GitHub."
+    )
+    df = None
 except Exception as e:
-    st.error(f"Gagal memuat file Excel. Pastikan nama file di GitHub sama persis. Error: {e}")
+  st.error(f"Gagal memuat file Excel: {str(e)}")
+  df = None
+
+# ==========================================
+# 5. BAGIAN INTERAKSI ANALISIS AI
+# ==========================================
+st.markdown("---")
+st.subheader("🤖 Analisis Komentar AI (Groq)")
+
+if df is not None:
+  if st.button("🚀 Jalankan Analisis AI"):
+    with st.spinner("Sedang memproses analisis varians keuangan dengan AI..."):
+      # Mengubah dataframe menjadi ringkasan teks untuk dikirim ke AI
+      data_summary = df.to_string(index=False)
+      prompt = (
+          "Berikut adalah data laporan keuangan Budget vs Actual:\n\n"
+          f"{data_summary}\n\n"
+          "Tolong berikan analisis audit yang mendalam mengenai varians"
+          " anggaran tersebut, identifikasi pos-pos yang mengalami selisih"
+          " signifikan, dan berikan rekomendasi profesional."
+      )
+
+      ai_response = run_ai_analysis(prompt)
+
+      st.markdown("### Hasil Analisis Auditor AI:")
+      st.write(ai_response)
+else:
+  st.info(
+      "Silakan pastikan file dataset tersedia agar tombol analisis dapat"
+      " digunakan."
+  )
