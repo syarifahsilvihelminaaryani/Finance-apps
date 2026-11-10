@@ -40,7 +40,7 @@ def run_ai_analysis(prompt_text):
       )
 
     completion = client.chat.completions.create(
-        model="gemma2-9b-it",
+        model="openai/gpt-oss-120b",
         messages=[
             {
                 "role": "system",
