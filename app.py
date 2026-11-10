@@ -30,7 +30,7 @@ client = Groq(api_key=groq_api_key)
 
 
 # ==========================================
-# 3. FUNGSI ANALISIS AI MENGGUNAKAN GROQ
+# 3. FUNGSI ANALISIS AI KONSISTEN
 # ==========================================
 def run_ai_analysis(prompt_text):
   try:
@@ -40,19 +40,21 @@ def run_ai_analysis(prompt_text):
       )
 
     completion = client.chat.completions.create(
-        model="openai/gpt-oss-120b",
+        model="llama-3.3-70b-versatile",
         messages=[
             {
                 "role": "system",
                 "content": (
-                    "Anda adalah seorang auditor keuangan publik yang ahli"
-                    " dalam analisis varians anggaran dan evaluasi kinerja"
-                    " keuangan."
+                    "Anda adalah seorang auditor keuangan publik profesional dan"
+                    " senior. Tugas Anda adalah menganalisis varians anggaran"
+                    " (Budget vs Actual) secara objektif, konsisten, dan"
+                    " terstruktur. Selalu gunakan format laporan audit formal"
+                    " dalam Bahasa Indonesia yang baku dan profesional."
                 ),
             },
             {"role": "user", "content": prompt_text},
         ],
-        temperature=0.7,
+        temperature=0.1,
     )
     return completion.choices[0].message.content
   except Exception as e:
@@ -72,7 +74,7 @@ try:
     st.dataframe(df, use_container_width=True)
   else:
     st.warning(
-        f"File {file_path} tidak ditemukan di direktori repositori. Silkan"
+        f"File {file_path} tidak ditemukan di direktori repositori. Silakan"
         " unggah file Excel tersebut ke GitHub."
     )
     df = None
@@ -88,10 +90,11 @@ st.subheader("🤖 Analisis Komentar AI (Groq)")
 
 if df is not None:
   if st.button("🚀 Jalankan Analisis AI"):
-    with st.spinner("Sedang memproses analisis varians keuangan dengan AI..."):
-      # Mengubah dataframe menjadi ringkasan teks untuk dikirim ke AI
+    with st.spinner(
+        "Sedang memproses analisis varians keuangan yang konsisten..."
+    ):
       data_summary = df.to_string(index=False)
-    prompt = (
+      prompt = (
           "Berikut adalah data laporan keuangan Budget vs Actual:\n\n"
           f"{data_summary}\n\n"
           "Berikan analisis audit keuangan yang mendalam dengan mengikuti"
@@ -109,7 +112,6 @@ if df is not None:
           "Jawablah SELURUHNYA menggunakan Bahasa Indonesia formal, objektif,"
           " dan konsisten sesuai format di atas."
       )
-          
 
       ai_response = run_ai_analysis(prompt)
 
