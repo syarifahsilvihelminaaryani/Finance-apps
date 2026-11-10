@@ -91,11 +91,12 @@ if df is not None:
     with st.spinner("Sedang memproses analisis varians keuangan dengan AI..."):
       # Mengubah dataframe menjadi ringkasan teks untuk dikirim ke AI
       data_summary = df.to_string(index=False)
-      prompt = (
-    "Berikut adalah data laporan keuangan Budget vs Actual:\n\n"
-    f"{data_summary}\n\n"
-    "Tolong berikan analisis audit keuangan yang mendalam, identifikasi pos-pos yang mengalami selisih signifikan, dan berikan rekomendasi profesional. Jawablah SELURUHNYA menggunakan Bahasa Indonesia yang formal dan profesional."
-)
+     prompt = (
+          "Berikut adalah data laporan keuangan Budget vs Actual:\n\n"
+          f"{data_summary}\n\n"
+          "Berikan analisis audit keuangan yang mendalam dengan mengikuti"
+          " format terstruktur persis seperti berikut:\n"
+          
 
       ai_response = run_ai_analysis(prompt)
 
