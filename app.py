@@ -40,7 +40,7 @@ def run_ai_analysis(prompt_text):
       )
 
     completion = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="gemma2-9b-it",
         messages=[
             {
                 "role": "system",
