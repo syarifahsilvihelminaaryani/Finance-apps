@@ -92,12 +92,10 @@ if df is not None:
       # Mengubah dataframe menjadi ringkasan teks untuk dikirim ke AI
       data_summary = df.to_string(index=False)
       prompt = (
-          "Berikut adalah data laporan keuangan Budget vs Actual:\n\n"
-          f"{data_summary}\n\n"
-          "Tolong berikan analisis audit yang mendalam mengenai varians"
-          " anggaran tersebut, identifikasi pos-pos yang mengalami selisih"
-          " signifikan, dan berikan rekomendasi profesional."
-      )
+    "Berikut adalah data laporan keuangan Budget vs Actual:\n\n"
+    f"{data_summary}\n\n"
+    "Tolong berikan analisis audit keuangan yang mendalam, identifikasi pos-pos yang mengalami selisih signifikan, dan berikan rekomendasi profesional. Jawablah SELURUHNYA menggunakan Bahasa Indonesia yang formal dan profesional."
+)
 
       ai_response = run_ai_analysis(prompt)
 
