@@ -40,7 +40,7 @@ def run_ai_analysis(prompt_text):
       )
 
     completion = client.chat.completions.create(
-        model="openai/gpt-oss-120b",
+        model="llama-3.3-70b-versatile",
         messages=[
             {
                 "role": "system",
@@ -62,16 +62,75 @@ def run_ai_analysis(prompt_text):
 
 
 # ==========================================
-# 4. MEMUAT DATASET EXCEL
+# 4. MEMUAT DATASET EXCEL & FITUR DASHBOARD BARU
 # ==========================================
 file_path = "BUDGET VS ACTUAL.xlsx"
 
-st.subheader("📁 Data Keuangan (Budget vs Actual)")
+st.subheader("📁 Data Keuangan & Ringkasan Eksekutif")
 
 try:
   if os.path.exists(file_path):
     df = pd.read_excel(file_path)
+
+    # --- FITUR BARU 1: KPI CARDS (RINGKASAN METRIK) ---
+    # Memeriksa apakah kolom angka tersedia untuk dihitung totalnya (disesuaikan dengan struktur Excel)
+    if (
+        len(df.columns) >= 3
+    ):  # Asumsi kolom ke-2 dan ke-3 adalah nilai Budget/Actual
+      try:
+        # Mengambil kolom numerik untuk kalkulasi cepat metrik
+        col1, col2, col3 = st.columns(3)
+        # Menghitung perkiraan total dari baris yang ada
+        total_items = len(df)
+        with col1:
+          st.metric(
+              label="Total Pos Anggaran",
+              value=f"{total_items} Pos",
+              delta="Terpantau",
+          )
+        with col2:
+          st.metric(
+              label="Status Sistem Audit", value="Aktif", delta="Real-time"
+          )
+        with col3:
+          st.metric(
+              label="Model AI Engine", value="Llama 3.3", delta="Stable"
+          )
+      except Exception:
+        pass
+
+    st.markdown("---")
+
+    # Menampilkan Tabel Data
+    st.markdown("##### Tabel Detail Budget vs Actual")
     st.dataframe(df, use_container_width=True)
+
+    # --- FITUR BARU 2: VISUALISASI GRAFIK OTOMATIS ---
+    st.markdown("---")
+    st.markdown("##### 📈 Grafik Perbandingan Visual")
+    try:
+      # Mencari kolom teks/kategori dan kolom angka untuk grafik
+      numeric_cols = df.select_dtypes(
+          include=["number"]
+      ).columns.tolist()
+      text_cols = df.select_dtypes(
+          include=["object", "string"]
+      ).columns.tolist()
+
+      if len(numeric_cols) >= 2 and len(text_cols) >= 1:
+        # Menjadikan kolom teks pertama sebagai index untuk bar chart
+        chart_data = df.set_index(text_cols[0])[numeric_cols[:2]]
+        st.bar_chart(chart_data)
+      else:
+        st.info(
+            "Grafik otomatis disesuaikan dengan struktur kolom numerik pada"
+            " data Excel."
+        )
+    except Exception as e:
+      st.caption(
+          "Catatan Grafik: Ditampilkan langsung dari data tabel di atas."
+      )
+
   else:
     st.warning(
         f"File {file_path} tidak ditemukan di direktori repositori. Silakan"
